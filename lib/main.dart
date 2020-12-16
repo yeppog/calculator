@@ -36,7 +36,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
   void buttonPressed(String buttonText) {
     switch(buttonText) {
-      case "CLEAR":
+      case "C":
         {
           _output = "";
           output = "0";
@@ -59,6 +59,7 @@ class _MyHomePageState extends State<MyHomePage> {
         {_output += buttonText;}
         break;
       case "=":
+        _output = evalExp(parseString(_output));
         break;
       case "DEL":
         {
@@ -69,7 +70,7 @@ class _MyHomePageState extends State<MyHomePage> {
           break;
     }
     // debug
-    print(parseString(_output));
+
 
     setState(() {
       if (reset == 1) {
@@ -82,25 +83,145 @@ class _MyHomePageState extends State<MyHomePage> {
 
   }
 
+  double evalTwo(String num1, String num2, String op) {
+    double evaluated;
+    switch(op) {
+      case ("+"):
+        evaluated = double.parse(num1) + double.parse(num2);
+        break;
+      case ("-"):
+        evaluated = double.parse(num1) - double.parse(num2);
+        break;
+      case ("/"):
+        evaluated = double.parse(num1) / double.parse(num2);
+        break;
+      case ("X"):
+        evaluated = double.parse(num1) * double.parse(num2);
+        break;
+    }
+    return evaluated;
+  }
 
+
+
+  evalExp (List input) {
+    List<String> operatorArr = ["+", "-", "/", "X", "(", ")"];
+    if (input.length == 1) {
+      return input.last;
+    } else {
+        String num1;
+        String num2;
+        String op;
+        bool brackets = false;
+        bool canEval = false;
+        String strnum1;
+        double strindex;
+        double index;
+        double output;
+        double size = 2;
+        List<String> outputArr = List<String>();
+
+        for (int i = 0; i < input.length; i++ ) {
+          print(num1);
+          if (canEval) {
+            break;
+          } else if (input[i] == "(") {
+              brackets = true;
+          } else if (input[i] == ")") {
+              brackets = false;
+              canEval = true;
+          } else if (!operatorArr.contains(input[i])) {
+              if (num1 == null) {
+                strnum1 = input[i];
+                strindex = i.toDouble();
+                index = i.toDouble();
+                num1 = input[i];
+              } else if (num2 == null) {
+                num2 = input[i];
+                strnum1 = input[i];
+                strindex = i.toDouble();
+              } else {
+                strnum1 = input[i];
+                strindex = i.toDouble();
+              }
+          } else if (operatorArr.contains(input[i])) {
+              if (brackets) {
+                index = strindex;
+                num1 = strnum1;
+                num2 = input[i + 1];
+                op = input[i];
+              } else if (input[i] == "/" || input[i] == "X") {
+                  if (op == "-" || op == "+") {
+                    index = strindex;
+                    num1 = strnum1;
+                    num2 = input[i + 1];
+                    op = input [i];
+                  } else if (op == null) {
+                      op = input[i];
+                  }
+              } else if (op == null){
+                  op = input[i];
+              }
+          }
+        }
+        output = evalTwo(num1, num2, op);
+        for (int i = 0; i < input.length; i ++) {
+          if (input[i] == "(" || input[i] == ")") {
+          } else if (i == index) {
+            outputArr.add(output.toString());
+            i += size.toInt();
+          } else {
+            outputArr.add(input[i]);
+          }
+        }
+        print(num1);
+        print(num2);
+        print(op);
+        print(outputArr);
+        return evalExp(outputArr);
+    }
+  }
 
 
   List parseString (String input) {
     String store = "";
     List<String> outputArr = new List<String>();
     List<String> operatorArr = ["+", "-", "/", "X", "(", ")"];
+    double openCount = 0;
+    double closeCount = 0;
+    double error = 0;
     for (int i = 0; i < input.length; i ++ ) {
       if (operatorArr.contains(input[i])) {
+        if (input[i] == "(") {
+          openCount += 1;
+        } else if (input[i] == ")") {
+          closeCount += 1;
+        }
+        if (closeCount > openCount) {
+          error = 1;
+        }
         if (store.length != 0) {
           outputArr.add(store);
           store = "";
         }
         outputArr.add(input[i]);
+      } else if (i == input.length - 1) {
+          if (store.length != 0) {
+            store += input[i];
+            outputArr.add(store);
+          } else {
+            outputArr.add(input[i]);
+          }
       } else {
         store += input[i];
       }
     }
-    return outputArr;
+    if (error != 1) {
+      return outputArr;
+    } else {
+      return null;
+    }
+
   }
 
   // Widget for each button, calls out the onPressed function which updates the
@@ -172,14 +293,15 @@ class _MyHomePageState extends State<MyHomePage> {
               Row(children: [
                 buildButton("."),
                 buildButton("0"),
-                buildButton("00"),
+                buildButton("("),
                 buildButton("+")
               ]),
 
               Row(children: [
-                buildButton("CLEAR"),
+                buildButton("C"),
                 buildButton("DEL"),
-                buildButton("="),
+                buildButton(")"),
+                buildButton("=")
               ])
               ])
             ])
