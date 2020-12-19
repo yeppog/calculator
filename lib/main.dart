@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 // import 'package:dart_numerics/dart_numerics.dart' as numerics;
@@ -61,8 +63,11 @@ class _MyHomePageState extends State<MyHomePage> {
         {_output += buttonText;}
         break;
       case "=":
-        _output = evalExp(parseString(_output));
-        print(evalTwoRat("15", "15/9", "X"));
+        if (_selections[0]){
+          _output = evalExp(parseString(_output)).toString();
+        } else {
+          _output = evalExp(parseString(_output)).toDecimal();
+        }
         break;
       case "DEL":
         {
@@ -72,9 +77,6 @@ class _MyHomePageState extends State<MyHomePage> {
           { _output += buttonText; }
           break;
     }
-    // debug
-
-
     setState(() {
       if (reset == 1) {
         output = "0";
@@ -86,155 +88,32 @@ class _MyHomePageState extends State<MyHomePage> {
 
   }
 
-  // checks if the input is a rational
-  bool isRat (String input) {
-    return input.contains("/");
-  }
 
-  splitRat (String input) {
-    List<int> outputArr = new List<int>(2);
-    String holder = "";
-    for (int i = 0; i < input.length; i++) {
-      if (input[i] == "/" ) {
-        outputArr[0] = int.parse(holder);
-        holder = "";
-      } else if (i == input.length - 1) {
-        holder += input[i];
-        outputArr[1] = int.parse(holder);
-      } else if (input[i] != "/"){
-        holder += input[i];
-      }
-    }
-    return outputArr;
-  }
 
-  String simplifyRat (String input) {
-    List<int> storeArr = splitRat(input);
-    // find the gcd of the two numbers
-    int gcd = storeArr[0].gcd(storeArr[1]);
-    if (gcd > 0) {
-      storeArr[0] = storeArr[0] ~/ gcd;
-      storeArr[1] = storeArr[1] ~/ gcd;
-      if (storeArr[1] == 1) {
-        return storeArr[0].toString();
-      } else {
-        return storeArr[0].toString() + "/" + storeArr[1].toString();
-      }
-    } else {
-      return "NaN";
-    }
-
-  }
-
-  String evalTwoRat(String num1, String num2, String op) {
-
-    String evaluated;
+  RationalNumber evalTwo(RationalNumber num1, RationalNumber num2, String op) {
+    RationalNumber evaluated;
     switch(op) {
       case ("+"):
-        if (isRat(num1) && isRat(num2)) {
-          List<int> num1Store = splitRat(num1);
-          List<int> num2Store = splitRat(num2);
-          int gcd = num1Store[1].gcd(num2Store[1]);
-          int lcm = num1Store[1] * num2Store[1] ~/ gcd;
-          int numerator = lcm~/num1Store[1] * num1Store[0] + lcm~/num2Store[1] * num2Store[0];
-          evaluated = simplifyRat(numerator.toString() + "/" + lcm.toString());
-        } else if (!isRat(num1) && !isRat(num2)) {
-          evaluated = (double.parse(num1) + double.parse(num2)).toString();
-        } else {
-          if (isRat(num1)) {
-            List<int> num1Store = splitRat(num1);
-            int numerator = int.parse(num2) * num1Store[1] + num1Store[0];
-            evaluated = simplifyRat(numerator.toString() + "/" + num1Store[1].toString());
-          } else {
-            List<int> num2Store = splitRat(num2);
-            int numerator = int.parse(num1) * num2Store[1] + num2Store[0];
-            evaluated = simplifyRat(numerator.toString() + "/" + num2Store[1].toString());
-          }
-        }
+        return num1 + num2;
         break;
       case ("-"):
-        if (isRat(num1) && isRat(num2)) {
-          List<int> num1Store = splitRat(num1);
-          List<int> num2Store = splitRat(num2);
-          int gcd = num1Store[1].gcd(num2Store[1]);
-          int lcm = num1Store[1] * num2Store[1] ~/ gcd;
-          int numerator = lcm~/num1Store[1] * num1Store[0] - lcm~/num2Store[1] * num2Store[0];
-          evaluated = simplifyRat(numerator.toString() + "/" + lcm.toString());
-        } else if (!isRat(num1) && !isRat(num2)) {
-          evaluated = (double.parse(num1) + double.parse(num2)).toString();
-        } else {
-          if (isRat(num1)) {
-            List<int> num1Store = splitRat(num1);
-            int numerator = num1Store[0] - int.parse(num2) * num1Store[1];
-            evaluated = simplifyRat(numerator.toString() + "/" + num1Store[1].toString());
-          } else {
-            List<int> num2Store = splitRat(num2);
-            int numerator = num2Store[0] - int.parse(num1) * num2Store[1];
-            evaluated = simplifyRat(numerator.toString() + "/" + num2Store[1].toString());
-          }
-        }
+        return num1 - num2;
         break;
       case ("/"):
-        if (isRat(num1) && isRat(num2)) {
-          List<int> num1Store = splitRat(num1);
-          List<int> num2Store = splitRat(num2);
-          evaluated = simplifyRat((num1Store[0] * num2Store[1]).toString() + "/" + (num1Store[1] * num2Store[0]).toString());
-        } else if (!isRat(num1) && !isRat(num2)) {
-          evaluated = simplifyRat(num1 + "/" + num2);
-        } else {
-          if (isRat(num1)) {
-            List<int> num1Store = splitRat(num1);
-            evaluated = simplifyRat(num1Store[0].toString() + "/" + (num1Store[1] * int.parse(num2)).toString());
-          } else {
-            List<int> num2Store = splitRat(num2);
-            evaluated = simplifyRat(num2Store[0].toString() + "/" + (num2Store[1] * int.parse(num2)).toString());
-          }
-        }
+        return num1 / num2;
         break;
       case ("X"):
-        if (isRat(num1) && isRat(num2)) {
-          List<int> num1Store = splitRat(num1);
-          List<int> num2Store = splitRat(num2);
-          evaluated = simplifyRat((num1Store[0] * num2Store[0]).toString() + "/" + (num1Store[1] * num2Store[1]).toString());
-        } else if (!isRat(num1) && !isRat(num2)) {
-          evaluated = (int.parse(num1) * int.parse(num2)).toString();
-        } else {
-          if (isRat(num1)) {
-            List<int> num1Store = splitRat(num1);
-            evaluated = simplifyRat((num1Store[0] * int.parse(num2)).toString() + "/" + num1Store[1].toString());
-          } else {
-            List<int> num2Store = splitRat(num2);
-            evaluated = simplifyRat((num2Store[0] * int.parse(num1)).toString() + "/" + num2Store[1].toString());
-          }
-        }
+        return num1 * num2;
         break;
+      default:
+        return null;
     }
-    return evaluated.toString();
-  }
-
-
-  double evalTwo(String num1, String num2, String op) {
-    double evaluated;
-    switch(op) {
-      case ("+"):
-        evaluated = double.parse(num1) + double.parse(num2);
-        break;
-      case ("-"):
-        evaluated = double.parse(num1) - double.parse(num2);
-        break;
-      case ("/"):
-        evaluated = double.parse(num1) / double.parse(num2);
-        break;
-      case ("X"):
-        evaluated = double.parse(num1) * double.parse(num2);
-        break;
-    }
-    return evaluated;
   }
 
 
 
   evalExp (List input) {
+    print(input);
     List<String> operatorArr = ["+", "-", "/", "X", "(", ")"];
     if (input.length == 0) {
       return "";
@@ -242,20 +121,19 @@ class _MyHomePageState extends State<MyHomePage> {
     else if (input.length == 1) {
       return input.last;
     } else {
-        String num1;
-        String num2;
+        RationalNumber num1;
+        RationalNumber num2;
         String op;
         bool brackets = false;
         bool canEval = false;
-        String strnum1;
-        double strindex;
-        double index;
-        String output;
+        RationalNumber storePrevious;
+        int previousIndex;
+        int indexOfNum1; // position of number 1
+        RationalNumber output;
         double size = 2;
-        List<String> outputArr = List<String>();
+        List outputArr = List();
 
         for (int i = 0; i < input.length; i++ ) {
-          print(num1);
           if (canEval) {
             break;
           } else if (input[i] == "(") {
@@ -264,51 +142,52 @@ class _MyHomePageState extends State<MyHomePage> {
               brackets = false;
               canEval = true;
           } else if (!operatorArr.contains(input[i])) {
-              if (num1 == null) {
-                strnum1 = input[i];
-                strindex = i.toDouble();
-                index = i.toDouble();
+              if (num1 == null) { // only assign num1 if it is hasn't been assigned
+                storePrevious = input[i];
+                previousIndex = i;
+                indexOfNum1 = i;
                 num1 = input[i];
               } else if (num2 == null) {
                 num2 = input[i];
-                strnum1 = input[i];
-                strindex = i.toDouble();
+                storePrevious = input[i];
+                previousIndex = i;
               } else {
-                strnum1 = input[i];
-                strindex = i.toDouble();
+                storePrevious = input[i];
+                previousIndex = i;
               }
+
           } else if (operatorArr.contains(input[i])) {
               if (brackets) {
-                index = strindex;
-                num1 = strnum1;
+                indexOfNum1 = previousIndex;
+                num1 = storePrevious;
                 num2 = input[i + 1];
                 op = input[i];
-              } else if (input[i] == "/" || input[i] == "X") {
+              } else if (input[i] == "/" || input[i] == "X") { // check if there are operators of higher precedence
                   if (op == "-" || op == "+") {
-                    index = strindex;
-                    num1 = strnum1;
+                    indexOfNum1 = previousIndex;
+                    num1 = storePrevious;
                     num2 = input[i + 1];
                     op = input [i];
                   } else if (op == null) {
                       op = input[i];
                   }
-              } else if (op == null){
+              } else if (op == null){ // only assign operator if it hasn't been assigned
                   op = input[i];
               }
           }
         }
-        if (_selections[0] == true) {
-          output = evalTwoRat(num1, num2, op);
-        } else {
-          output = evalTwo(num1, num2, op).toString();
-        }
+        print(num1);
+        print(num2);
+        print(op);
+
+        output = evalTwo(num1, num2, op);
         for (int i = 0; i < input.length; i ++) {
           if (input[i] == "(" || input[i] == ")") {
-          } else if (i == index) {
+          } else if (i == indexOfNum1) {
             outputArr.add(output);
             i += size.toInt();
           } else {
-            outputArr.add(input[i]);
+            outputArr.add(RationalNumber(input[i]));
           }
         }
         return evalExp(outputArr);
@@ -318,7 +197,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
   List parseString (String input) {
     String store = "";
-    List<String> outputArr = new List<String>();
+    List outputArr = new List();
     List<String> operatorArr = ["+", "-", "/", "X", "(", ")"];
     double openCount = 0;
     double closeCount = 0;
@@ -334,22 +213,23 @@ class _MyHomePageState extends State<MyHomePage> {
           error = 1;
         }
         if (store.length != 0) {
-          outputArr.add(store);
+          outputArr.add(RationalNumber(store));
           store = "";
         }
         outputArr.add(input[i]);
       } else if (i == input.length - 1) {
           if (store.length != 0) {
             store += input[i];
-            outputArr.add(store);
+            outputArr.add(RationalNumber(store));
           } else {
-            outputArr.add(input[i]);
+              outputArr.add(RationalNumber(input[i]));
           }
       } else {
         store += input[i];
       }
     }
     if (error != 1) {
+      print(outputArr);
       return outputArr;
     } else {
       return null;
@@ -374,8 +254,6 @@ class _MyHomePageState extends State<MyHomePage> {
       ),
     );
   }
-
-
 
   @override
   Widget build(BuildContext context) {
@@ -456,5 +334,69 @@ class _MyHomePageState extends State<MyHomePage> {
             ])
           )
         );
+  }
+}
+
+
+
+
+
+class RationalNumber{
+  int numerator;
+  int denominator;
+  // takes in the input and immediately reduces the fraction to simplest form
+  // overloaded constructor for inputs that have no denominator
+  RationalNumber (String numerator, [String denominator = "1"]){
+    if (denominator != "1") {
+      int intNumerator = int.parse(numerator);
+      int intDenominator = int.parse(denominator);
+      int gcd = intNumerator.gcd(intDenominator);
+      this.numerator = (intNumerator ~/ gcd);
+      this.denominator = (intDenominator ~/ gcd);
+    } else {
+      this.numerator = int.parse(numerator);
+      this.denominator = int.parse(denominator);
+    }
+  }
+
+  // output the fractional representation of the rational number
+  String toString () {
+    if (denominator != 1) {
+      return numerator.toString() + "/" + denominator.toString();
+    } else {
+      return numerator.toString();
+    }
+  }
+  // to reduce back to decimal
+  String toDecimal() {
+    return (numerator / denominator).toString();
+  }
+
+
+  RationalNumber operator + (RationalNumber input) {
+    int gcd = denominator.toInt().gcd(input.denominator.toInt());
+    int lcm = denominator * input.denominator ~/ gcd;
+    int outputNumerator = lcm ~/ denominator * numerator + lcm ~/ input.denominator * input.numerator;
+    int outputDenominator = lcm;
+    return RationalNumber(outputNumerator.toString(), outputDenominator.toString());
+  }
+
+  RationalNumber operator - (RationalNumber input) {
+    int gcd = denominator.toInt().gcd(input.denominator.toInt());
+    int lcm = denominator * input.denominator ~/ gcd;
+    int outputNumerator = lcm ~/ denominator * numerator - lcm ~/ input.denominator * input.numerator;
+    int outputDenominator = lcm;
+    return RationalNumber(outputNumerator.toString(), outputDenominator.toString());
+  }
+  RationalNumber operator * (RationalNumber input) {
+    int outputNumerator = this.numerator * input.numerator;
+    int outputDenominator = denominator * input.denominator;
+    return RationalNumber(outputNumerator.toString(), outputDenominator.toString());
+  }
+
+  RationalNumber operator / (RationalNumber input) {
+    int outputNumerator = numerator * input.denominator;
+    int outputDenominator = denominator * input.numerator;
+    return RationalNumber(outputNumerator.toString(), outputDenominator.toString());
   }
 }
