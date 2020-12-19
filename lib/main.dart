@@ -63,11 +63,7 @@ class _MyHomePageState extends State<MyHomePage> {
         {_output += buttonText;}
         break;
       case "=":
-        if (_selections[0]){
-          _output = evalExp(parseString(_output)).toString();
-        } else {
-          _output = evalExp(parseString(_output)).toDecimal();
-        }
+        _output = evalExp(parseString(_output, _selections[0])).toString();
         break;
       case "DEL":
         {
@@ -90,8 +86,8 @@ class _MyHomePageState extends State<MyHomePage> {
 
 
 
-  RationalNumber evalTwo(RationalNumber num1, RationalNumber num2, String op) {
-    RationalNumber evaluated;
+  Number evalTwo(Number num1, Number num2, String op) {
+    Number evaluated;
     switch(op) {
       case ("+"):
         return num1 + num2;
@@ -113,7 +109,6 @@ class _MyHomePageState extends State<MyHomePage> {
 
 
   evalExp (List input) {
-    print(input);
     List<String> operatorArr = ["+", "-", "/", "X", "(", ")"];
     if (input.length == 0) {
       return "";
@@ -121,15 +116,15 @@ class _MyHomePageState extends State<MyHomePage> {
     else if (input.length == 1) {
       return input.last;
     } else {
-        RationalNumber num1;
-        RationalNumber num2;
+        Number num1;
+        Number num2;
         String op;
         bool brackets = false;
         bool canEval = false;
-        RationalNumber storePrevious;
+        Number storePrevious;
         int previousIndex;
         int indexOfNum1; // position of number 1
-        RationalNumber output;
+        Number output;
         double size = 2;
         List outputArr = List();
 
@@ -176,26 +171,25 @@ class _MyHomePageState extends State<MyHomePage> {
               }
           }
         }
-        print(num1);
-        print(num2);
-        print(op);
 
         output = evalTwo(num1, num2, op);
+
         for (int i = 0; i < input.length; i ++) {
           if (input[i] == "(" || input[i] == ")") {
           } else if (i == indexOfNum1) {
             outputArr.add(output);
             i += size.toInt();
           } else {
-            outputArr.add(RationalNumber(input[i]));
+            outputArr.add(input[i]);
           }
         }
+
         return evalExp(outputArr);
     }
   }
 
 
-  List parseString (String input) {
+  List parseString (String input, bool rational) {
     String store = "";
     List outputArr = new List();
     List<String> operatorArr = ["+", "-", "/", "X", "(", ")"];
@@ -213,16 +207,31 @@ class _MyHomePageState extends State<MyHomePage> {
           error = 1;
         }
         if (store.length != 0) {
-          outputArr.add(RationalNumber(store));
+          if (rational) {
+            outputArr.add(RationalNumber(store));
+          } else {
+            outputArr.add(Number(store));
+          }
+
           store = "";
         }
         outputArr.add(input[i]);
       } else if (i == input.length - 1) {
           if (store.length != 0) {
             store += input[i];
-            outputArr.add(RationalNumber(store));
+            if (rational) {
+              outputArr.add(RationalNumber(store));
+            } else {
+              outputArr.add(Number(store));
+            }
+
           } else {
+            if (rational) {
               outputArr.add(RationalNumber(input[i]));
+            } else {
+              outputArr.add(Number(input[i]));
+            }
+
           }
       } else {
         store += input[i];
@@ -341,30 +350,58 @@ class _MyHomePageState extends State<MyHomePage> {
 
 
 
-class RationalNumber{
-  int numerator;
-  int denominator;
+class Number {
+  double numerator;
+  double denominator;
+
+  Number(String numerator, [String denominator = "1"]) {
+    this.numerator = double.parse(numerator);
+    this.denominator = double.parse(denominator);
+  }
+  String toString() {
+    return numerator.toString();
+  }
+  Number operator + (Number input) {
+    return Number((numerator + input.numerator).toString());
+  }
+  Number operator - (Number input) {
+    return Number((numerator - input.numerator).toString());
+  }
+  Number operator / (Number input) {
+    return Number((numerator / input.numerator).toString());
+  }
+  Number operator * (Number input) {
+    return Number((numerator * input.numerator).toString());
+  }
+}
+
+
+
+
+class RationalNumber extends Number{
+  double numerator;
+  double denominator;
   // takes in the input and immediately reduces the fraction to simplest form
   // overloaded constructor for inputs that have no denominator
-  RationalNumber (String numerator, [String denominator = "1"]){
+  RationalNumber (String numerator, [String denominator = "1"]) : super(numerator, denominator){
     if (denominator != "1") {
-      int intNumerator = int.parse(numerator);
-      int intDenominator = int.parse(denominator);
+      int intNumerator = double.parse(numerator).toInt();
+      int intDenominator = double.parse(denominator).toInt();
       int gcd = intNumerator.gcd(intDenominator);
-      this.numerator = (intNumerator ~/ gcd);
-      this.denominator = (intDenominator ~/ gcd);
+      this.numerator = (intNumerator ~/ gcd).toDouble();
+      this.denominator = (intDenominator ~/ gcd).toDouble();
     } else {
-      this.numerator = int.parse(numerator);
-      this.denominator = int.parse(denominator);
+      this.numerator = double.parse(numerator);
+      this.denominator = double.parse(denominator);
     }
   }
 
   // output the fractional representation of the rational number
   String toString () {
     if (denominator != 1) {
-      return numerator.toString() + "/" + denominator.toString();
+      return numerator.toInt().toString() + "/" + denominator.toInt().toString();
     } else {
-      return numerator.toString();
+      return (numerator / denominator).toString();
     }
   }
   // to reduce back to decimal
@@ -373,30 +410,30 @@ class RationalNumber{
   }
 
 
-  RationalNumber operator + (RationalNumber input) {
+  RationalNumber operator + (Number input) {
     int gcd = denominator.toInt().gcd(input.denominator.toInt());
     int lcm = denominator * input.denominator ~/ gcd;
-    int outputNumerator = lcm ~/ denominator * numerator + lcm ~/ input.denominator * input.numerator;
+    double outputNumerator = lcm ~/ denominator * numerator + lcm ~/ input.denominator * input.numerator;
     int outputDenominator = lcm;
     return RationalNumber(outputNumerator.toString(), outputDenominator.toString());
   }
 
-  RationalNumber operator - (RationalNumber input) {
+  RationalNumber operator - (Number input) {
     int gcd = denominator.toInt().gcd(input.denominator.toInt());
     int lcm = denominator * input.denominator ~/ gcd;
-    int outputNumerator = lcm ~/ denominator * numerator - lcm ~/ input.denominator * input.numerator;
+    double outputNumerator = lcm ~/ denominator * numerator - lcm ~/ input.denominator * input.numerator;
     int outputDenominator = lcm;
     return RationalNumber(outputNumerator.toString(), outputDenominator.toString());
   }
-  RationalNumber operator * (RationalNumber input) {
-    int outputNumerator = this.numerator * input.numerator;
-    int outputDenominator = denominator * input.denominator;
+  RationalNumber operator * (Number input) {
+    double outputNumerator = this.numerator * input.numerator;
+    double outputDenominator = denominator * input.denominator;
     return RationalNumber(outputNumerator.toString(), outputDenominator.toString());
   }
 
-  RationalNumber operator / (RationalNumber input) {
-    int outputNumerator = numerator * input.denominator;
-    int outputDenominator = denominator * input.numerator;
+  RationalNumber operator / (Number input) {
+    double outputNumerator = numerator * input.denominator;
+    double outputDenominator = denominator * input.numerator;
     return RationalNumber(outputNumerator.toString(), outputDenominator.toString());
   }
 }
